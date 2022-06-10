@@ -34,9 +34,9 @@ import org.apache.spark.sql.util.SchemaUtils
 import org.apache.spark.sql.{AnalysisException, DataFrame, Row}
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.NextIterator
-
 import java.sql.{Connection, Driver, DriverManager, JDBCType, PreparedStatement, ResultSet, ResultSetMetaData, SQLException}
-import java.util.Locale
+import java.util.{Locale, Properties}
+
 import scala.collection.JavaConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -932,6 +932,22 @@ object JdbcUtils extends Logging {
     try {
       statement.setQueryTimeout(options.queryTimeout)
       statement.executeUpdate(sql)
+    } finally {
+      statement.close()
+    }
+  }
+
+  /**
+   * Execute user defined sql
+   */
+  def executeSql(
+                  map: Map[String, String],
+                  userdefined: String): Unit = {
+    val options = new JdbcOptionsInWrite(map)
+    val conn = JdbcUtils.createConnectionFactory(options)()
+    val statement = conn.createStatement
+    try {
+      statement.executeUpdate(userdefined)
     } finally {
       statement.close()
     }

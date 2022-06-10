@@ -25,11 +25,23 @@ import org.apache.seatunnel.spark.SparkEnvironment
 import org.apache.seatunnel.spark.batch.SparkBatchSink
 import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.execution.datasources.jdbc2.JDBCSaveMode
+import org.apache.spark.sql.execution.datasources.jdbc2.JdbcUtils
 
 class Jdbc extends SparkBatchSink {
 
   override def output(data: Dataset[Row], env: SparkEnvironment): Unit = {
     val saveMode = config.getString("saveMode")
+    if (config.hasPath("definedsql")) {
+      val definedsql = config.getString("definedsql")
+      val configMap = Map(
+          "driver" -> config.getString("driver"),
+          "url" -> config.getString("url"),
+          "user" -> config.getString("user"),
+          "password" -> config.getString("password"),
+          "dbtable" -> config.getString("dbTable")
+      )
+      JdbcUtils.executeSql(configMap, definedsql)
+    }
     if ("update".equals(saveMode)) {
       data.write.format("org.apache.spark.sql.execution.datasources.jdbc2").options(
         Map(
@@ -46,11 +58,20 @@ class Jdbc extends SparkBatchSink {
           "duplicateIncs" -> config.getString("duplicateIncs"),
           "showSql" -> config.getString("showSql"))).save()
     } else {
-      val prop = new java.util.Properties()
-      prop.setProperty("driver", config.getString("driver"))
-      prop.setProperty("user", config.getString("user"))
-      prop.setProperty("password", config.getString("password"))
-      data.write.mode(saveMode).jdbc(config.getString("url"), config.getString("dbTable"), prop)
+      val configMap = Map(
+        "driver" -> config.getString("driver"),
+        "url" -> config.getString("url"),
+        "user" -> config.getString("user"),
+        "password" -> config.getString("password"),
+        "dbtable" -> config.getString("dbTable")
+      )
+      if (config.hasPath("createTableOptions")) {
+        configMap.add("createTableOptions", config.getString("createTableOptions"))
+      }
+      if (config.hasPath("createTableColumnTypes")) {
+        configMap.add("createTableColumnTypes", config.getString("createTableColumnTypes"))
+      }
+      data.write.format("jdbc").mode(saveMode).options(configMap).save()
     }
 
   }

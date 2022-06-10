@@ -95,6 +95,7 @@
             <groupId>org.apache.seatunnel</groupId>
             <artifactId>seatunnel-connector-spark-phoenix</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -137,6 +138,7 @@
             <groupId>org.apache.seatunnel</groupId>
             <artifactId>seatunnel-connector-spark-hbase</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -155,6 +157,7 @@
             <groupId>org.apache.seatunnel</groupId>
             <artifactId>seatunnel-connector-spark-tidb</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

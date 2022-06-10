@@ -272,7 +272,7 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
-                <scope>test</scope>
+<!--                <scope>test</scope>-->
             </dependency>
 
             <dependency>
@@ -315,6 +315,7 @@
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-shaded-hadoop-2</artifactId>
                 <version>${flink-shaded-hadoop-2.version}</version>
+                <scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>xml-apis</groupId>
