@@ -936,4 +936,20 @@ object JdbcUtils extends Logging {
       statement.close()
     }
   }
+
+  /**
+   * Execute user defined sql
+   */
+  def executeSql(
+                  map: Map[String, String],
+                  userdefined: String): Unit = {
+    val options = new JdbcOptionsInWrite(map)
+    val conn = JdbcUtils.createConnectionFactory(options)()
+    val statement = conn.createStatement
+    try {
+      statement.executeUpdate(userdefined)
+    } finally {
+      statement.close()
+    }
+  }
 }
