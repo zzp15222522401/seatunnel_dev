@@ -41,11 +41,11 @@ public class DataCountRecord {
 
         Config config = environment.getConfig();
         String appName = config.getString("spark.app.name");
-        String propEnv = System.getenv("prop_env");
+        String propEnv = config.getString("spark.yarn.appMasterEnv.prop_env");
+        String isRecord = config.getString("spark.yarn.appMasterEnv.if_record");
         if (propEnv == null) {
             propEnv = "dev";
         }
-        String isRecord = System.getenv("data_record");
         if (isRecord == null){
             isRecord = "false";
         }
@@ -80,7 +80,7 @@ public class DataCountRecord {
                 result.add(tmpStr);
             }
             String sqlStr = String.format("update \n" +
-                    "dmp_test.dis_job_detailed_information \n" +
+                    "dis_job_detailed_information \n" +
                     "set \n" +
                     "data_count='%s' \n" +
                     "where \n" +
@@ -91,7 +91,7 @@ public class DataCountRecord {
                     "from \n" +
                     "(select \n" +
                     "max(job_submit_time) as atime \n" +
-                    "from dmp_test.dis_job_detailed_information \n" +
+                    "from dis_job_detailed_information \n" +
                     "where \n" +
                     "job_name = '%s') as a)", result, appName, appName);
             GetConnectMysql.saveToMysql(sqlStr, propEnv);
