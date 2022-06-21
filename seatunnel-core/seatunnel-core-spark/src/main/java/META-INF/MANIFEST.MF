@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Main-Class: org.apache.seatunnel.SeatunnelSpark
+Class-Path: /Users/aibee/IdeaProjects/incubator-seatunnel/seatunnel-core
+ /seatunnel-core-spark/src/main/java/org/apache/seatunnel/SeatunnelSpark
+ .java
+

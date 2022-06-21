@@ -20,6 +20,7 @@ package org.apache.seatunnel.spark.batch;
 import org.apache.seatunnel.env.Execution;
 import org.apache.seatunnel.spark.BaseSparkTransform;
 import org.apache.seatunnel.spark.SparkEnvironment;
+import org.apache.seatunnel.spark.utils.DataCountRecord;
 
 import org.apache.seatunnel.shade.com.typesafe.config.Config;
 import org.apache.seatunnel.shade.com.typesafe.config.ConfigFactory;
@@ -27,6 +28,8 @@ import org.apache.seatunnel.shade.com.typesafe.config.ConfigFactory;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 public class SparkBatchExecution implements Execution<SparkBatchSource, BaseSparkTransform, SparkBatchSink, SparkEnvironment> {
@@ -40,7 +43,7 @@ public class SparkBatchExecution implements Execution<SparkBatchSource, BaseSpar
     }
 
     @Override
-    public void start(List<SparkBatchSource> sources, List<BaseSparkTransform> transforms, List<SparkBatchSink> sinks) {
+    public void start(List<SparkBatchSource> sources, List<BaseSparkTransform> transforms, List<SparkBatchSink> sinks) throws SQLException, IOException, ClassNotFoundException {
 
         sources.forEach(source -> SparkEnvironment.registerInputTempView(source, environment));
 
@@ -53,6 +56,7 @@ public class SparkBatchExecution implements Execution<SparkBatchSource, BaseSpar
             for (SparkBatchSink sink : sinks) {
                 SparkEnvironment.sinkProcess(environment, sink, ds);
             }
+            DataCountRecord.dataCount(environment, sources, transforms, ds);
         }
     }
 
