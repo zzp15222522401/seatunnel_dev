@@ -12,7 +12,8 @@ public class GetConnectMysql {
 
     public static void saveToMysql(String sql, String env) throws SQLException, IOException, ClassNotFoundException {
 
-        Properties properties = loadProperties(env);
+        String propFileName = String.format("jdbc_mysql_%s.properties", env);
+        Properties properties = loadProperties(propFileName);
         String username = properties.getProperty("jdbc.username");
         String password = properties.getProperty("jdbc.password");
         String dbName = properties.getProperty("jdbc.dbName");
@@ -35,12 +36,11 @@ public class GetConnectMysql {
         }
     }
 
-    public static Properties loadProperties(String env) throws IOException {
+    public static Properties loadProperties(String fileName) throws IOException {
 
-        String propFileName = String.format("jdbc_mysql_%s.properties", env);
         Properties properties = new Properties();
-        InputStream jdbcPropFile = Thread.currentThread().getContextClassLoader().getResourceAsStream(propFileName);
-        properties.load(jdbcPropFile);
+        InputStream propFile = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
+        properties.load(propFile);
         return properties;
     }
 }

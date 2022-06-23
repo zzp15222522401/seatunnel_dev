@@ -56,7 +56,7 @@ public class SparkBatchExecution implements Execution<SparkBatchSource, BaseSpar
             for (SparkBatchSink sink : sinks) {
                 SparkEnvironment.sinkProcess(environment, sink, ds);
             }
-            DataCountRecord.dataCount(environment, sources, transforms, ds);
+            DataCountRecord.dataCount(environment, sources, transforms, sinks);
         }
     }
 
