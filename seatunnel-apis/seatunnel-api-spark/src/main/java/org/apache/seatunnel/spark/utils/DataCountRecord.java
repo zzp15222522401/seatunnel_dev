@@ -67,14 +67,14 @@ public class DataCountRecord {
                     if (sourceConfig.hasPath("result_table_name")) {
                         tableName = sourceConfig.getString("result_table_name");
                     }
-                    sourceArrayList.add(tableName + ":" + sourceDataCountStr);
+                    sourceArrayList.add(tableName + "-source:" + sourceDataCountStr);
 
                 }
                 for (BaseSparkTransform transform : transforms) {
                     Dataset<Row> rowDataset = SparkEnvironment.transformProcess(environment, transform, ds);
                     long transformDataCount = transformDataCount(rowDataset);
                     String transformDataCountStr = String.valueOf(transformDataCount);
-                    transArrayList.add(transformDataCountStr);
+                    transArrayList.add("transform:" + transformDataCountStr);
                 }
                 for (SparkBatchSink sink : sinks) {
                     Config sinkConfig = sink.getConfig();
@@ -83,12 +83,12 @@ public class DataCountRecord {
                         Dataset<Row> sinkDataset = environment.getSparkSession().read().table(sourceTableName);
                         long sinkDataCount = sinkDataset.count();
                         String sinkDataCountStr = String.valueOf(sinkDataCount);
-                        sinkArrayList.add(sinkDataCountStr);
+                        sinkArrayList.add("sink:" + sinkDataCountStr);
                     }
                     else {
                         long sinkDataCount = ds.count();
                         String sinkDataCountStr = String.valueOf(sinkDataCount);
-                        sinkArrayList.add(sinkDataCountStr);
+                        sinkArrayList.add("sink:" + sinkDataCountStr);
                     }
                 }
             }
@@ -99,6 +99,8 @@ public class DataCountRecord {
                 String tmpStr = String.format("%s,%s,%s ", s, trans1, sink1);
                 result.add(tmpStr);
             }
+            String resultCount = String.join(",", result);
+            LOGGER.info("resultStr:" + resultCount);
             String appId = GetYarnInFor.getYarnInForDetail(propEnv, appName);
             LOGGER.info("appId:" + appId);
             String sqlStr = String.format("update \n" +
@@ -115,8 +117,9 @@ public class DataCountRecord {
                     "max(job_submit_time) as atime \n" +
                     "from dis_job_detailed_information \n" +
                     "where \n" +
-                    "job_name = '%s') as a)", result, appId, appName, appName);
+                    "job_name = '%s') as a)", resultCount, appId, appName, appName);
             GetConnectMysql.saveToMysql(sqlStr, propEnv);
+            LOGGER.info("Data volume is recorded");
         }
         else {
             LOGGER.info("Data volume is not recorded");
