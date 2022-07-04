@@ -17,15 +17,13 @@
 package org.apache.seatunnel.spark.jdbc.sink
 
 import scala.collection.JavaConversions._
-
 import org.apache.seatunnel.common.config.CheckConfigUtil.checkAllExists
 import org.apache.seatunnel.common.config.CheckResult
 import org.apache.seatunnel.shade.com.typesafe.config.ConfigFactory
 import org.apache.seatunnel.spark.SparkEnvironment
 import org.apache.seatunnel.spark.batch.SparkBatchSink
 import org.apache.spark.sql.{Dataset, Row}
-import org.apache.spark.sql.execution.datasources.jdbc2.JDBCSaveMode
-import org.apache.spark.sql.execution.datasources.jdbc2.JdbcUtils
+import org.apache.spark.sql.execution.datasources.jdbc2.{JDBCSaveMode, JdbcOptionsInWrite, JdbcUtils}
 
 class Jdbc extends SparkBatchSink {
 
@@ -71,7 +69,16 @@ class Jdbc extends SparkBatchSink {
       if (config.hasPath("createTableColumnTypes")) {
         configMap.add("createTableColumnTypes", config.getString("createTableColumnTypes"))
       }
-      data.write.format("jdbc").mode(saveMode).options(configMap).save()
+      if ("overwrite".equals(saveMode)) {
+        val options = new JdbcOptionsInWrite(configMap)
+        val conn = JdbcUtils.createConnectionFactory(options)()
+        JdbcUtils.truncateTable(conn, options)
+        data.write.format("jdbc").mode("append").options(configMap).save()
+      }
+      else {
+        data.write.format("jdbc").mode(saveMode).options(configMap).save()
+
+      }
     }
 
   }

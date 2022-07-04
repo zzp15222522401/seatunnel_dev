@@ -28,6 +28,7 @@ object Config extends Serializable {
   final val FORMAT = "format"
   final val SAVE_MODE_ERROR = "error"
   final val OPTION_PREFIX = "options."
+  final val FILE_COUNT = "file_count"
 
   final val TEXT = "text"
   final val PARQUET = "parquet"

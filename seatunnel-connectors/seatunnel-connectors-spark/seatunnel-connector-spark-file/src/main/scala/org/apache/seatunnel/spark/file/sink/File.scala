@@ -48,7 +48,11 @@ class File extends SparkBatchSink {
   }
 
   override def output(ds: Dataset[Row], env: SparkEnvironment): Unit = {
-    val writer = ds.coalesce(1).write.mode(config.getString(SAVE_MODE))
+    var writer = ds.coalesce(1).write.mode(config.getString(SAVE_MODE))
+    if (config.hasPath(FILE_COUNT)) {
+      val file_count = config.getInt(FILE_COUNT)
+      writer = ds.coalesce(file_count).write.mode(config.getString(SAVE_MODE))
+    }
     if (config.getStringList(PARTITION_BY).nonEmpty) {
       writer.partitionBy(config.getStringList(PARTITION_BY): _*)
     }
