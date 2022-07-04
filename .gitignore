@@ -40,3 +40,6 @@ Test.scala
 test.conf
 log4j.properties
 spark-warehouse
+
+# properties
+seatunnel-apis/seatunnel-api-spark/src/main/resources
