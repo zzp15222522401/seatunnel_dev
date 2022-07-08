@@ -42,4 +42,4 @@ log4j.properties
 spark-warehouse
 
 # properties
-seatunnel-apis/seatunnel-api-spark/src/main/resources
+seatunnel-apis/seatunnel-api-spark/src/main/resources/*.properties

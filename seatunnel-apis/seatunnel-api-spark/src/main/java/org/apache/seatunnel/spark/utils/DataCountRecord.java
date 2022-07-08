@@ -1,5 +1,6 @@
 package org.apache.seatunnel.spark.utils;
 
+import org.apache.seatunnel.common.utils.FeiShuWarning;
 import org.apache.seatunnel.spark.BaseSparkTransform;
 import org.apache.seatunnel.spark.SparkEnvironment;
 import org.apache.seatunnel.spark.batch.SparkBatchSink;
@@ -31,9 +32,11 @@ public class DataCountRecord {
         return tranform.count();
     }
 
-    public static long sinkDataCount(Dataset<Row> sink) {
+    private static long sinkDataCount(Dataset<Row> sink) {
         return sink.count();
     }
+
+    private static final long ZERO = 3;
 
     private static String getPropEnv(Config config) {
         String propEnv;
@@ -55,6 +58,17 @@ public class DataCountRecord {
             isRecord = "false";
         }
         return isRecord;
+    }
+
+    private static String getFeiShuUrl(Config config) {
+        String url;
+        if (config.hasPath("spark.yarn.appMasterEnv.fs_url")) {
+            url = config.getString("spark.yarn.appMasterEnv.fs_url");
+        }
+        else {
+            url = "https://open.feishu.cn/open-apis/bot/v2/hook/262624b4-17b5-472a-9cea-8e40296b4173";
+        }
+        return url;
     }
 
     public static void dataCount(SparkEnvironment environment, List<SparkBatchSource> sources, List<BaseSparkTransform> transforms, List<SparkBatchSink> sinks) throws SQLException, IOException, ClassNotFoundException {
@@ -80,6 +94,11 @@ public class DataCountRecord {
                         tableName = sourceConfig.getString("result_table_name");
                     }
                     sourceArrayList.add(tableName + "-source:" + sourceDataCountStr);
+                    String url = getFeiShuUrl(config);
+                    String name = String.format("%s %s", appName, tableName);
+                    if (ZERO == sourceDataCount) {
+                        FeiShuWarning.sendFeiShuWarningInfo(name, url);
+                    }
 
                 }
                 for (BaseSparkTransform transform : transforms) {
@@ -127,7 +146,6 @@ public class DataCountRecord {
                                              "and a.source_name =b.source_name and a.target_name =b.target_name where a.job_name = '%s' and b.job_name ='%s'\n" +
                                              "order by a.create_time desc limit 1",
                                              now, now, appId, resultCount, "FINISHED", "SUCCEEDED", appName,  appName);
-            LOGGER.info(insertSql);
             GetConnectMysql.saveToMysql(insertSql, propEnv);
             LOGGER.info("Data volume is recorded");
         }
