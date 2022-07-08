@@ -36,7 +36,7 @@ public class DataCountRecord {
         return sink.count();
     }
 
-    private static final long ZERO = 3;
+    private static final long ZERO = 0;
 
     private static String getPropEnv(Config config) {
         String propEnv;
