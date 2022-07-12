@@ -147,7 +147,7 @@ public class DataCountRecord {
                                              "order by a.create_time desc limit 1",
                                              now, now, appId, resultCount, "FINISHED", "SUCCEEDED", appName,  appName);
             GetConnectMysql.saveToMysql(insertSql, propEnv);
-            LOGGER.info("Data volume is recorded");
+            LOGGER.info(String.format("Data volume is recorded-%s", resultCount));
         }
         else {
             LOGGER.info("Data volume is not recorded");
