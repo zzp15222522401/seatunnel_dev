@@ -43,3 +43,5 @@ spark-warehouse
 
 # properties
 seatunnel-apis/seatunnel-api-spark/src/main/resources/*.properties
+plugins.tar
+plugins.tar.gz

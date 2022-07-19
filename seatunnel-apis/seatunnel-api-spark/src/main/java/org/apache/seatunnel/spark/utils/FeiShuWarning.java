@@ -1,4 +1,4 @@
-package org.apache.seatunnel.common.utils;
+package org.apache.seatunnel.spark.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -14,13 +14,13 @@ import java.util.HashMap;
 
 public class FeiShuWarning {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeiShuWarning.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(org.apache.seatunnel.spark.utils.FeiShuWarning.class);
 
     private static final int CONN_TIMEOUT = 3 * 1000;
 
     private static final int SO_TIMEOUT = 3 * 60 * 1000;
 
-    private static final int MAP_SIZE = 3;
+    private static final int MAP_SIZE = 0;
 
     private static String sendPostWithJson(String url, String jsonStr) {
         String jsonResult = "";
@@ -57,12 +57,12 @@ public class FeiShuWarning {
         HashMap<String, Object> text = new HashMap<>(MAP_SIZE);
         HashMap<String, Object> title = new HashMap<>(MAP_SIZE);
         ArrayList<Object> list = new ArrayList<>();
-        text.put("content", String.format("%s the amount of data synchronized is 0", tableName));
+        text.put("content", String.format("%s \n The amount of data synchronized is 0", tableName));
         text.put("tag", "lark_md");
         elements.put("tag", "div");
         elements.put("text", text);
         list.add(elements);
-        title.put("content", "dis synchronous data amount warning");
+        title.put("content", "Dis Synchronous Data Amount Warning");
         title.put("tag", "plain_text");
         header.put("title", title);
         header.put("template", "red");
@@ -77,3 +77,4 @@ public class FeiShuWarning {
         LOGGER.info(resultData);
     }
 }
+

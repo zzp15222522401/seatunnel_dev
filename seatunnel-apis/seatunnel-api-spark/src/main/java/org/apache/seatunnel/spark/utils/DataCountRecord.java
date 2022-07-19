@@ -1,6 +1,5 @@
 package org.apache.seatunnel.spark.utils;
 
-import org.apache.seatunnel.common.utils.FeiShuWarning;
 import org.apache.seatunnel.spark.BaseSparkTransform;
 import org.apache.seatunnel.spark.SparkEnvironment;
 import org.apache.seatunnel.spark.batch.SparkBatchSink;
@@ -8,6 +7,7 @@ import org.apache.seatunnel.spark.batch.SparkBatchSource;
 
 import org.apache.seatunnel.shade.com.typesafe.config.Config;
 
+import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
@@ -77,7 +77,19 @@ public class DataCountRecord {
         ArrayList<String> transArrayList = new ArrayList<>();
         ArrayList<String> sinkArrayList = new ArrayList<>();
         ArrayList<String> result = new ArrayList<>();
-
+        ArrayList<String> argsList = new ArrayList<>();
+        SparkConf sparkConf = new SparkConf();
+        String joinStr = "";
+        if (!sparkConf.get("spark.executor.extraJavaOptions").isEmpty()) {
+            String tmpArgs = sparkConf.get("spark.executor.extraJavaOptions");
+            String[] split = tmpArgs.split(" ");
+            for (String s : split) {
+                String s1 = s.split("=")[1];
+                argsList.add(s1);
+            }
+            joinStr = String.join("-", argsList);
+        }
+        LOGGER.info(joinStr);
         Config config = environment.getConfig();
         String appName = config.getString("spark.app.name");
         String isRecord = DataCountRecord.getIfRecord(config);
@@ -95,7 +107,13 @@ public class DataCountRecord {
                     }
                     sourceArrayList.add(tableName + "-source:" + sourceDataCountStr);
                     String url = getFeiShuUrl(config);
-                    String name = String.format("%s %s", appName, tableName);
+                    String name;
+                    if (!"".equals(joinStr)) {
+                        name = String.format("Job:%s \nTable:%s \nArgs:%s", appName, tableName, joinStr);
+                    }
+                    else {
+                        name = String.format("Job:%s \nTable:%s", appName, tableName);
+                    }
                     if (ZERO == sourceDataCount) {
                         FeiShuWarning.sendFeiShuWarningInfo(name, url);
                     }
@@ -109,7 +127,7 @@ public class DataCountRecord {
                 }
                 for (SparkBatchSink sink : sinks) {
                     Config sinkConfig = sink.getConfig();
-                    if (config.hasPath("source_table_name")) {
+                    if (sinkConfig.hasPath("source_table_name")) {
                         String sourceTableName = sinkConfig.getString("source_table_name");
                         Dataset<Row> sinkDataset = environment.getSparkSession().read().table(sourceTableName);
                         long sinkDataCount = sinkDataset.count();
