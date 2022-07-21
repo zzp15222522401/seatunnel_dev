@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -60,15 +61,17 @@ public class DataCountRecord {
         return isRecord;
     }
 
-    private static String getFeiShuUrl(Config config) {
-        String url;
+    private static List<String> getFeiShuUrl(Config config) {
+        ArrayList<String> urlLists = new ArrayList<>();
         if (config.hasPath("spark.yarn.appMasterEnv.fs_url")) {
-            url = config.getString("spark.yarn.appMasterEnv.fs_url");
+            String urls = config.getString("spark.yarn.appMasterEnv.fs_url");
+            String[] split = urls.split(";");
+            urlLists.addAll(Arrays.asList(split));
         }
         else {
-            url = "https://open.feishu.cn/open-apis/bot/v2/hook/262624b4-17b5-472a-9cea-8e40296b4173";
+            urlLists.add("https://open.feishu.cn/open-apis/bot/v2/hook/262624b4-17b5-472a-9cea-8e40296b4173");
         }
-        return url;
+        return urlLists;
     }
 
     public static void dataCount(SparkEnvironment environment, List<SparkBatchSource> sources, List<BaseSparkTransform> transforms, List<SparkBatchSink> sinks) throws SQLException, IOException, ClassNotFoundException {
@@ -80,7 +83,7 @@ public class DataCountRecord {
         ArrayList<String> argsList = new ArrayList<>();
         SparkConf sparkConf = new SparkConf();
         String joinStr = "";
-        if (!sparkConf.get("spark.executor.extraJavaOptions").isEmpty()) {
+        if (!sparkConf.get("spark.executor.extraJavaOptions", "").isEmpty()) {
             String tmpArgs = sparkConf.get("spark.executor.extraJavaOptions");
             String[] split = tmpArgs.split(" ");
             for (String s : split) {
@@ -106,7 +109,6 @@ public class DataCountRecord {
                         tableName = sourceConfig.getString("result_table_name");
                     }
                     sourceArrayList.add(tableName + "-source:" + sourceDataCountStr);
-                    String url = getFeiShuUrl(config);
                     String name;
                     if (!"".equals(joinStr)) {
                         name = String.format("Job:%s \nTable:%s \nArgs:%s", appName, tableName, joinStr);
@@ -114,10 +116,12 @@ public class DataCountRecord {
                     else {
                         name = String.format("Job:%s \nTable:%s", appName, tableName);
                     }
-                    if (ZERO == sourceDataCount) {
-                        FeiShuWarning.sendFeiShuWarningInfo(name, url);
+                    List<String> feiShuUrl = getFeiShuUrl(config);
+                    for (String url : feiShuUrl) {
+                        if (ZERO == sourceDataCount) {
+                            FeiShuWarning.sendFeiShuWarningInfo(name, url);
+                        }
                     }
-
                 }
                 for (BaseSparkTransform transform : transforms) {
                     Dataset<Row> rowDataset = SparkEnvironment.transformProcess(environment, transform, ds);

@@ -57,7 +57,7 @@ public class FeiShuWarning {
         HashMap<String, Object> text = new HashMap<>(MAP_SIZE);
         HashMap<String, Object> title = new HashMap<>(MAP_SIZE);
         ArrayList<Object> list = new ArrayList<>();
-        text.put("content", String.format("%s \n The amount of data synchronized is 0", tableName));
+        text.put("content", String.format("%s \nThe amount of data synchronized is 0", tableName));
         text.put("tag", "lark_md");
         elements.put("tag", "div");
         elements.put("text", text);
