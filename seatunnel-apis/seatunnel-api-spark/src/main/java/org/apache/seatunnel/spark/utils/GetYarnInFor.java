@@ -37,7 +37,7 @@ public class GetYarnInFor {
         return formparams;
     }
 
-    public static String getYarnInForDetail(String env, String jobName) throws IOException, JSONException {
+    public static String getYarnInForDetail(String env, String jobName, String tags) throws IOException, JSONException {
 
         String yarnInForFile = "yarn_infor.properties";
         Properties properties = GetConnectMysql.loadProperties(yarnInForFile);
@@ -62,7 +62,7 @@ public class GetYarnInFor {
             ArrayList<String> appIdList = new ArrayList<>();
             for (int i = 0; i < app.size(); i++) {
                 JSONObject info = app.getJSONObject(i);
-                if (jobName.equals(info.getString("name"))) {
+                if (jobName.equals(info.getString("name")) && tags.equals(info.getString("applicationTags"))) {
                     String id = info.getString("id");
                     appIdList.add(id);
                 }

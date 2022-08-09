@@ -74,6 +74,14 @@ public class DataCountRecord {
         return urlLists;
     }
 
+    private static String getInfoTags(Config config) {
+        String infoTags = "";
+        if (config.hasPath("spark.yarn.appMasterEnv.job_info_tags")) {
+            infoTags = config.getString("spark.yarn.appMasterEnv.job_info_tags");
+        }
+        return infoTags;
+    }
+
     public static void dataCount(SparkEnvironment environment, List<SparkBatchSource> sources, List<BaseSparkTransform> transforms, List<SparkBatchSink> sinks) throws SQLException, IOException, ClassNotFoundException {
 
         ArrayList<String> sourceArrayList = new ArrayList<>();
@@ -93,10 +101,16 @@ public class DataCountRecord {
             joinStr = String.join("-", argsList);
         }
         LOGGER.info(joinStr);
+        String tags = "";
+        if (!sparkConf.get("spark.yarn.tags", "").isEmpty()) {
+            tags = sparkConf.get("spark.yarn.tags");
+        }
+        LOGGER.info("job_tags: " + tags);
         Config config = environment.getConfig();
         String appName = config.getString("spark.app.name");
         String isRecord = DataCountRecord.getIfRecord(config);
         String propEnv = DataCountRecord.getPropEnv(config);
+        String infoTags = getInfoTags(config);
         if (!"false".equals(isRecord)) {
             String tableName = "Source";
             if (!sources.isEmpty()) {
@@ -119,7 +133,7 @@ public class DataCountRecord {
                     List<String> feiShuUrl = getFeiShuUrl(config);
                     for (String url : feiShuUrl) {
                         if (ZERO == sourceDataCount) {
-                            FeiShuWarning.sendFeiShuWarningInfo(name, url);
+                            org.apache.seatunnel.spark.utils.FeiShuWarning.sendFeiShuWarningInfo(name, url);
                         }
                     }
                 }
@@ -154,20 +168,22 @@ public class DataCountRecord {
             }
             String resultCount = String.join(",", result);
             LOGGER.info("resultStr:" + resultCount);
-            String appId = GetYarnInFor.getYarnInForDetail(propEnv, appName);
+            String appId = GetYarnInFor.getYarnInForDetail(propEnv, appName, tags);
             LOGGER.info("appId:" + appId);
             Date date = new Date();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String now = dateFormat.format(date);
-            String insertSql = String.format("insert into dis_job_detailed_information (job_name,fieldmapping,job_submit_time,dag_id,pre_task_id,task_id,\n" +
-                                             "create_time,sqlfilename,propfilename, source_name, target_name,\n" +
-                                             "application_id,data_count,job_status,final_status)" +
-                                             "select a.job_name,fieldmapping,'%s',dag_id,pre_task_id,task_id,'%s', \n" +
-                                             "sqlfilename, propfilename, a.source_name, a.target_name, '%s','%s','%s','%s' \n" +
-                                             "from dis_job_detailed_information a left join dis_instance_record b on a.job_name = b.job_name \n" +
-                                             "and a.source_name =b.source_name and a.target_name =b.target_name where a.job_name = '%s' and b.job_name ='%s'\n" +
-                                             "order by a.create_time desc limit 1",
-                                             now, now, appId, resultCount, "FINISHED", "SUCCEEDED", appName,  appName);
+            String insertSql = "";
+            if (!"".equals(infoTags)) {
+                insertSql = String.format("insert into dis_job_detailed_information (job_tags,job_name,fieldmapping,job_submit_time,dag_id,pre_task_id,task_id," +
+                        "create_time,sqlfilename,propfilename, source_name, target_name,application_id,data_count,job_status,final_status)" +
+                        "select '%s',job_name,fieldmapping,'%s',dag_id,pre_task_id,task_id,'%s',sqlfilename,propfilename, source_name, target_name," +
+                        "'%s','%s','%s','%s' from dis_job_detailed_information where job_tags='%s'", tags, now, now, appId, resultCount, "FINISHED", "SUCCEEDED", infoTags);
+            } else {
+                insertSql = String.format("update dis_job_detailed_information set job_submit_time='%s',create_time='%s'," +
+                        "application_id='%s',data_count='%s',job_status='%s',final_status='%s' where job_tags='%s'", now, now, appId, resultCount, "FINISHED", "SUCCEEDED", tags);
+            }
+            LOGGER.info(insertSql);
             GetConnectMysql.saveToMysql(insertSql, propEnv);
             LOGGER.info(String.format("Data volume is recorded-%s", resultCount));
         }
